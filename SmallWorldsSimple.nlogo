@@ -6,54 +6,36 @@ turtles-own
   distance-from-other-turtles   ;; list of distances of this node from other turtles
 ]
 
-links-own
-[ rewired? ]                   ;; keeps track of whether the link has been rewired or not
-
 globals
 [
   clustering-coefficient-of-lattice    ;; the clustering coefficient of the initial lattice
   average-path-length-of-lattice       ;; average path length of the initial lattice
-  infinity                             ;; a very large number.
-                                         ;; used to denote distance between two turtles which
-                                         ;; don't have a connected or unconnected path between them
 ]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Setup Procedures ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 to setup
   clear-all
-  set infinity 99999  ;; just an arbitrary choice for a large number
-  set-default-shape turtles "circle"
-  make-turtles
-
-  wire-them
+  create-turtles num-nodes [ set color gray + 2 set shape "circle"]
+  ;; arrange them in a circle in order by who number
+  layout-circle (sort turtles) max-pxcor - 1
+  ask turtles [create-links-with n-of 2 other turtles with [distance myself < 4]]
 
   ;; setting the values for the initial lattice
   set clustering-coefficient-of-lattice average-clustering-coefficient
   set average-path-length-of-lattice average-path-length
 end
 
-to make-turtles
-  create-turtles num-nodes [ set color gray + 2 ]
-  ;; arrange them in a circle in order by who number
-  layout-circle (sort turtles) max-pxcor - 1
-end
 
 ;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Main Procedure ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
-
 to rewire-one
-
-  ;let potential-edges links with [ not rewired? ]
-;  ifelse any? potential-edges [
-;    ask one-of potential-edges [
     ask one-of links [
       let thislink self
       let node1 one-of both-ends
+
       ;; method1: find a node distinct from node1 and not already a neighbor of node1
       ;let node2 one-of turtles with [not link-neighbor? node1 and self != node1 and count link-neighbors < count turtles - 1]
 
@@ -62,11 +44,12 @@ to rewire-one
 
       ask node1 [
         while [link-neighbor? node2] [set node2 find-pref-node node1 thislink]
-        create-link-with node2 [ set color cyan ] ]
+        create-link-with node2 [ set color cyan ]
+      ]
 
       die
     ]
-    make-web-connected
+    keep-web-connected
     ;; plot the results
     update-plots
 end
@@ -85,7 +68,7 @@ to-report average-clustering-coefficient
   report mean [ nw:clustering-coefficient ] of turtles
 end
 
-to make-web-connected
+to keep-web-connected
   while [average-path-length = false] [
     ask min-one-of turtles [count link-neighbors][
       create-link-with one-of other turtles [
@@ -95,41 +78,6 @@ to make-web-connected
   ]
 end
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Clustering computations ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-to-report in-neighborhood? [ hood ]
-  report ( member? end1 hood and member? end2 hood )
-end
-
-
-;;;;;;;;;;;;;;;;;;;;;;;
-;;; Edge Operations ;;;
-;;;;;;;;;;;;;;;;;;;;;;;
-
-;; creates a new lattice
-to wire-them
-  ;; iterate over the turtles
-  let n 0
-  while [n < count turtles]
-  [
-    ;; make edges with the next two neighbors
-    ;; this makes a lattice with average degree of 4
-    make-edge turtle n
-              turtle ((n + 1) mod count turtles)
-    make-edge turtle n
-              turtle ((n + 2) mod count turtles)
-    set n n + 1
-  ]
-end
-
-;; connects the two turtles
-to make-edge [node1 node2]
-  ask node1 [ create-link-with node2  [
-    set rewired? false
-  ] ]
-end
 
 
 
