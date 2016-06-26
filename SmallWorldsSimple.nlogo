@@ -1,11 +1,5 @@
 extensions[nw]
 
-turtles-own
-[
-  node-clustering-coefficient
-  distance-from-other-turtles   ;; list of distances of this node from other turtles
-]
-
 globals
 [
   clustering-coefficient-of-lattice    ;; the clustering coefficient of the initial lattice
@@ -21,11 +15,13 @@ to setup
   ;; arrange them in a circle in order by who number
   layout-circle (sort turtles) max-pxcor - 1
   let min-distance [distance turtle 1] of turtle 0
+  ;; let members close to each other make connections so we have "cliques"
   ask turtles [create-links-with other turtles with [distance myself <= (min-distance * 4)]]
 
   ;; setting the values for the initial lattice
   set clustering-coefficient-of-lattice average-clustering-coefficient
   set average-path-length-of-lattice average-path-length
+  reset-ticks
 end
 
 
@@ -33,27 +29,26 @@ end
 ;;; Main Procedure ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;
 to rewire-one
-    ask one-of links [
-      let node1 one-of both-ends
+  ask one-of links [
+    let node1 one-of both-ends
 
-      ;; method1: find a node distinct from node1 and not already a neighbor of node1
-      ;let node2 one-of turtles with [not link-neighbor? node1 and self != node1 and count link-neighbors < count turtles - 1]
+    ;; method1: find a node distinct from node1 and not already a neighbor of node1
+    let node2 one-of turtles with [not link-neighbor? node1 and self != node1 and count link-neighbors < count turtles - 1]
 
-      ; ###alternative method: try preferential attachment approach ...###
-      let node2 find-pref-node node1
-      ask node1 [ while [link-neighbor? node2] [set node2 find-pref-node node1 ] ]
+    ; ###alternative method: try preferential attachment approach ...###
+    ;let node2 find-pref-node node1
 
-      ask node1 [create-link-with node2]
+    ask node1 [create-link-with node2]
 
-      die
-    ]
-    ;; plot the results
-    update-plots
+    die
+  ]
+  ;; plot the results
+  update-plots
+  tick
 end
 
 to-report find-pref-node [input-node]
-  let n0 one-of [both-ends] of one-of links with [not link-neighbor? input-node]
-  set nd one-of ([both-ends] of )
+  let n0 one-of [both-ends] of one-of links with [not member? input-node both-ends]
   report n0
 end
 
@@ -120,7 +115,7 @@ num-nodes
 num-nodes
 10
 125
-50
+112
 1
 1
 NIL
