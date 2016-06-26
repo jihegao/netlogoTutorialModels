@@ -20,7 +20,8 @@ to setup
   create-turtles num-nodes [ set color gray + 2 set shape "circle"]
   ;; arrange them in a circle in order by who number
   layout-circle (sort turtles) max-pxcor - 1
-  ask turtles [create-links-with n-of 2 other turtles with [distance myself < 4]]
+  let min-distance [distance turtle 1] of turtle 0
+  ask turtles [create-links-with other turtles with [distance myself <= (min-distance * 4)]]
 
   ;; setting the values for the initial lattice
   set clustering-coefficient-of-lattice average-clustering-coefficient
@@ -33,31 +34,27 @@ end
 ;;;;;;;;;;;;;;;;;;;;;;;
 to rewire-one
     ask one-of links [
-      let thislink self
       let node1 one-of both-ends
 
       ;; method1: find a node distinct from node1 and not already a neighbor of node1
       ;let node2 one-of turtles with [not link-neighbor? node1 and self != node1 and count link-neighbors < count turtles - 1]
 
-      ; alternative method: try preferential attachment approach ...
-      let node2 find-pref-node node1 thislink
+      ; ###alternative method: try preferential attachment approach ...###
+      let node2 find-pref-node node1
+      ask node1 [ while [link-neighbor? node2] [set node2 find-pref-node node1 ] ]
 
-      ask node1 [
-        while [link-neighbor? node2] [set node2 find-pref-node node1 thislink]
-        create-link-with node2 [ set color cyan ]
-      ]
+      ask node1 [create-link-with node2]
 
       die
     ]
-    keep-web-connected
     ;; plot the results
     update-plots
 end
 
-to-report find-pref-node [input-node input-link]
-  let nd 0
-  ask input-link [set nd one-of ([both-ends] of (one-of other links with [not member? input-node both-ends]))]
-  report nd
+to-report find-pref-node [input-node]
+  let n0 one-of [both-ends] of one-of links with [not link-neighbor? input-node]
+  set nd one-of ([both-ends] of )
+  report n0
 end
 
 to-report average-path-length
@@ -69,11 +66,14 @@ to-report average-clustering-coefficient
 end
 
 to keep-web-connected
-  while [average-path-length = false] [
+  if average-path-length = false [
     ask min-one-of turtles [count link-neighbors][
       create-link-with one-of other turtles [
-        set color cyan
-        ask one-of other links [die]]
+        ask one-of other links [die]
+        ifelse average-path-length = false
+        [ keep-web-connected ]
+        [ set color cyan ]
+      ]
     ]
   ]
 end
@@ -85,10 +85,10 @@ end
 ; See Info tab for full copyright and license.
 @#$#@#$#@
 GRAPHICS-WINDOW
-387
-52
-747
-433
+323
+51
+683
+432
 17
 17
 10.0
@@ -120,7 +120,7 @@ num-nodes
 num-nodes
 10
 125
-78
+50
 1
 1
 NIL
@@ -128,9 +128,9 @@ HORIZONTAL
 
 PLOT
 11
-127
+111
 275
-306
+290
 Network Properties Rewire-One
 fraction of edges rewired
 NIL
@@ -142,14 +142,14 @@ true
 true
 "" ""
 PENS
-"apl" 1.0 2 -65485 true "" "plot average-path-length / average-path-length-of-lattice"
+"apl" 1.0 2 -65485 true "" "plot ifelse-value (average-path-length != false)[average-path-length][999999] / average-path-length-of-lattice"
 "cc" 1.0 2 -10899396 true "" ";; note: dividing by initial value to normalize the plot\nplot average-clustering-coefficient / clustering-coefficient-of-lattice"
 
 BUTTON
-230
-72
-320
-105
+204
+26
+294
+59
 NIL
 rewire-one
 NIL
@@ -164,9 +164,9 @@ NIL
 
 MONITOR
 13
-328
+295
 160
-373
+340
 clustering-coefficient
 average-clustering-coefficient
 3
@@ -175,9 +175,9 @@ average-clustering-coefficient
 
 MONITOR
 147
-328
+295
 275
-373
+340
 NIL
 average-path-length
 3
@@ -203,9 +203,9 @@ NIL
 
 PLOT
 10
-396
+342
 275
-546
+492
 degree distribution
 NIL
 NIL
