@@ -1,19 +1,20 @@
+extensions [nw]
 turtles-own
 [
   infected?           ;; if true, the turtle is infectious
   resistant?          ;; if true, the turtle can't be infected
 ]
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 to setup
   clear-all
   setup-network
-  ask turtles [become-susceptible]
-
-  ask n-of initial-outbreak-size turtles [ become-infected ]
   ask links [ set color white ]
+  ask turtles [become-susceptible]
+  ask n-of initial-outbreak-size turtles [ become-infected ]
   reset-ticks
 end
-
 
 to setup-network
   set-default-shape turtles "circle"
@@ -28,7 +29,6 @@ to setup-network
     create-lattice num-links
     repeat number-of-nodes / 10 [rewire-one]
   ]
-
   repeat 1000 [ layout ]
 end
 
@@ -68,6 +68,10 @@ to-report find-pref-node [input-node]
   let n0 one-of [both-ends] of one-of links with [not member? input-node both-ends]
   report n0
 end
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to go
   if all? turtles [not infected?]
@@ -186,7 +190,7 @@ virus-spread-chance
 virus-spread-chance
 0.0
 10.0
-4
+4.9
 0.1
 1
 %
@@ -284,8 +288,8 @@ SLIDER
 average-node-degree
 average-node-degree
 1
-number-of-nodes - 1
-6
+10
+4
 1
 1
 NIL
