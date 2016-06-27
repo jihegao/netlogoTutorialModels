@@ -1,55 +1,20 @@
-extensions[nw]
+extensions [nw]
 
 globals
 [
-  clustering-coefficient-of-lattice    ;; the clustering coefficient of the initial lattice
-  average-path-length-of-lattice       ;; average path length of the initial lattice
+  clustering-coefficient-of-lattice
+  average-path-length-of-lattice
 ]
 
-;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Setup Procedures ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;
 to setup
   clear-all
-  create-turtles num-nodes [ set color gray + 2 set shape "circle"]
-  ;; arrange them in a circle in order by who number
+  crt num-nodes [ set color gray + 2 set shape "circle" ]
   layout-circle (sort turtles) max-pxcor - 1
   let min-distance [distance turtle 1] of turtle 0
-  ;; let members close to each other make connections so we have "cliques"
   ask turtles [create-links-with other turtles with [distance myself <= (min-distance * 4)]]
-
-  ;; setting the values for the initial lattice
   set clustering-coefficient-of-lattice average-clustering-coefficient
   set average-path-length-of-lattice average-path-length
   reset-ticks
-end
-
-
-;;;;;;;;;;;;;;;;;;;;;;;
-;;; Main Procedure ;;;
-;;;;;;;;;;;;;;;;;;;;;;;
-to rewire-one
-  ask one-of links [
-    let node1 one-of both-ends
-
-    ;; method1: find a node distinct from node1 and not already a neighbor of node1
-    let node2 one-of turtles with [not link-neighbor? node1 and self != node1 and count link-neighbors < count turtles - 1]
-
-    ; ###alternative method: try preferential attachment approach ...###
-    ;let node2 find-pref-node node1
-
-    ask node1 [create-link-with node2]
-
-    die
-  ]
-  ;; plot the results
-  update-plots
-  tick
-end
-
-to-report find-pref-node [input-node]
-  let n0 one-of [both-ends] of one-of links with [not member? input-node both-ends]
-  report n0
 end
 
 to-report average-path-length
@@ -60,24 +25,28 @@ to-report average-clustering-coefficient
   report mean [ nw:clustering-coefficient ] of turtles
 end
 
-to keep-web-connected
-  if average-path-length = false [
-    ask min-one-of turtles [count link-neighbors][
-      create-link-with one-of other turtles [
-        ask one-of other links [die]
-        ifelse average-path-length = false
-        [ keep-web-connected ]
-        [ set color cyan ]
-      ]
-    ]
+to rewire-one
+  ask one-of links [
+    let node1 one-of both-ends
+
+    ;; method1: find a node distinct from node1 and not already a neighbor of node1
+    ;let node2 one-of turtles with [not link-neighbor? node1 and self != node1 and count link-neighbors < count turtles - 1]
+
+    ; ###alternative method: try preferential attachment approach ...###
+    let node2 find-pref-node node1
+
+    ask node1 [create-link-with node2]
+
+    die
   ]
+
+  tick
 end
 
-
-
-
-; Copyright 2005 Uri Wilensky.
-; See Info tab for full copyright and license.
+to-report find-pref-node [input-node]
+  let n0 one-of [both-ends] of one-of links with [not member? input-node both-ends]
+  report n0
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 323
@@ -102,7 +71,7 @@ GRAPHICS-WINDOW
 17
 1
 1
-0
+1
 ticks
 30.0
 
@@ -115,7 +84,7 @@ num-nodes
 num-nodes
 10
 125
-112
+70
 1
 1
 NIL
@@ -127,7 +96,7 @@ PLOT
 275
 290
 Network Properties Rewire-One
-fraction of edges rewired
+NIL
 NIL
 0.0
 1.0
@@ -602,7 +571,7 @@ Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 
 @#$#@#$#@
-NetLogo 5.3.1
+NetLogo 5.2.0
 @#$#@#$#@
 setup
 repeat 5 [rewire-one]
